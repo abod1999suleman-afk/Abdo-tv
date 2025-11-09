@@ -3,1617 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abdo TV</title>
+    <title>Yacine TV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- تم إزالة مكتبة Plyr -->
-
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-
         * {
-            font-family: 'Cairo', sans-serif;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        :root {
-            --primary-color: #9D4EDD;
-            --primary-dark: #7B2CBF;
-            --primary-light: #C77DFF;
-        }
-
-        [data-theme="purple"] { --primary-color: #9D4EDD; --primary-dark: #7B2CBF; --primary-light: #C77DFF; }
-        [data-theme="red"] { --primary-color: #DC2626; --primary-dark: #B91C1C; --primary-light: #EF4444; }
-        [data-theme="amber"] { --primary-color: #D97706; --primary-dark: #B45309; --primary-light: #F59E0B; }
-        [data-theme="green"] { --primary-color: #059669; --primary-dark: #047857; --primary-light: #10B981; }
-        [data-theme="navy"] { --primary-color: #1E40AF; --primary-dark: #1E3A8A; --primary-light: #3B82F6; }
 
         body {
-            background: linear-gradient(135deg, #F5F5F5 0%, #E8E8E8 100%);
+            background: linear-gradient(135deg, #764BA2 0%, #667EEA 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
-        .theme-transition {
-            transition: all 0.3s ease;
+        .gradient-bg {
+            background: linear-gradient(135deg, #764BA2 0%, #667EEA 100%);
         }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            right: -280px;
-            width: 280px;
-            height: 100%;
+        .channel-button {
             background: white;
-            box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            transition: right 0.3s ease;
-            overflow-y: auto;
-        }
-
-        .sidebar.active { right: 0; }
-
-        .sidebar-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
-            backdrop-filter: blur(3px);
-        }
-
-        .sidebar-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .sidebar-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            padding: 1.5rem 1rem;
-            color: white;
-            border-radius: 0 0 20px 20px;
-            margin-bottom: 1rem;
-        }
-
-        .sidebar-item {
-            transition: all 0.15s ease;
-            border-right: 3px solid transparent;
-        }
-
-        .sidebar-item:hover {
-            background: rgba(157, 78, 221, 0.05);
-            border-right-color: var(--primary-color);
-            transform: translateX(-3px);
-        }
-
-        .sidebar-item:active {
-            background: rgba(157, 78, 221, 0.15);
-            transform: translateX(-5px) scale(0.98);
-        }
-
-        /* Server Selection Modal */
-        .server-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .server-modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .server-modal {
-            background: white;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9) translateY(20px);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            overflow: hidden;
-        }
-
-        .server-modal-overlay.active .server-modal {
-            transform: scale(1) translateY(0);
-        }
-
-        .server-modal-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            padding: 1.5rem;
-            text-align: center;
-            position: relative;
-        }
-
-        .server-modal-close {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-        }
-
-        .server-modal-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
-        }
-
-        .server-modal-close:active {
-            transform: rotate(90deg) scale(0.9);
-        }
-
-        .channel-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            margin-bottom: 0.75rem;
-            backdrop-filter: blur(10px);
-            overflow: hidden;
-        }
-
-        .channel-badge-icon {
-            font-size: 2.5rem;
-            color: white;
-        }
-
-        .channel-badge img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .server-modal-title {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-
-        .server-modal-subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .server-list {
-            padding: 1.5rem;
-        }
-
-        .server-option {
-            background: linear-gradient(135deg, #f8f9fa, #ffffff);
-            border: 2px solid rgba(157, 78, 221, 0.1);
-            border-radius: 16px;
-            padding: 1.25rem;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .server-option::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .server-option:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(157, 78, 221, 0.25);
-            border-color: var(--primary-color);
-        }
-
-        .server-option:hover::before {
-            opacity: 0.05;
-        }
-
-        .server-option:active {
-            transform: translateY(-2px) scale(0.98);
-        }
-
-        .server-option:last-child {
-            margin-bottom: 0;
-        }
-
-        .server-option-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            z-index: 1;
-        }
-
-        .server-option-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .server-icon {
-            width: 48px;
-            height: 48px;
+            border: 3px solid #764BA2;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3);
-        }
-
-        .server-info h4 {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.25rem;
-        }
-
-        .server-info p {
-            font-size: 0.75rem;
-            color: #6b7280;
-            font-weight: 600;
-        }
-
-        .server-quality-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            color: white;
-            box-shadow: 0 4px 12px rgba(157, 78, 221, 0.2);
-        }
-
-        .server-quality-badge.hd {
-            background: linear-gradient(135deg, #10B981, #059669);
-        }
-
-        .server-quality-badge.fhd {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .server-option {
-            animation: fadeInUp 0.3s ease forwards;
-            opacity: 0;
-        }
-
-        .server-option:nth-child(1) { animation-delay: 0.05s; }
-        .server-option:nth-child(2) { animation-delay: 0.1s; }
-        .server-option:nth-child(3) { animation-delay: 0.15s; }
-
-        /* Package Card */
-        .package-card {
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeIn 0.4s ease forwards;
-        }
-
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .package-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(157, 78, 221, 0.2);
-        }
-
-        .package-icon-container {
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .package-icon-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .package-icon-text {
-            font-size: 2rem;
-        }
-
-        /* Match Card */
-        .match-card {
-            background: white;
-            border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 1px solid rgba(157, 78, 221, 0.1);
-            opacity: 0;
-            transform: translateY(15px);
-            animation: fadeIn 0.4s ease forwards;
-        }
-
-        .match-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-            border-radius: 20px 20px 0 0;
-        }
-
-        .match-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 40px rgba(157, 78, 221, 0.2);
-        }
-
-        /* Smooth Scrolling */
-        .smooth-scroll {
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .scroll-container {
-            overflow-y: auto;
-            height: calc(100vh - 120px);
-            scroll-behavior: smooth;
-        }
-
-        /* Custom Scrollbar */
-        .scroll-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .scroll-container::-webkit-scrollbar-track {
-            background: rgba(157, 78, 221, 0.05);
-            border-radius: 10px;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Team Logo - Updated for vertical layout */
-        .team-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin: 10px;
+            font-size: 18px;
             font-weight: bold;
-            font-size: 2rem;
-            color: white;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;
-            margin: 0 auto;
-        }
-
-        .match-card:hover .team-logo {
-            transform: scale(1.1);
-        }
-
-        .team-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 50%;
-        }
-
-        .team-name {
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: #1f2937;
-            margin-top: 0.75rem;
-            min-height: 2.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Live Indicator - Enhanced */
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: white;
-            background: linear-gradient(135deg, #FF3B3B, #FF6B6B);
-            box-shadow: 0 8px 20px rgba(255, 59, 59, 0.4);
-            animation: livePulse 1.5s ease-in-out infinite;
-            letter-spacing: 0.5px;
-        }
-
-        @keyframes livePulse {
-            0%, 100% {
-                box-shadow: 0 8px 20px rgba(255, 59, 59, 0.4);
-                transform: scale(1);
-            }
-            50% {
-                box-shadow: 0 10px 30px rgba(255, 59, 59, 0.6);
-                transform: scale(1.02);
-            }
-        }
-
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            animation: dotPulse 1s ease-in-out infinite;
-        }
-
-        @keyframes dotPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(0.8); }
-        }
-
-        /* Time Display */
-        .time-display {
-            text-align: center;
-            padding: 8px 16px;
-        }
-
-        .time-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .time-value {
-            font-size: 1.25rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
-        }
-
-        /* Full Page Screen */
-        .full-page-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #F5F5F5 0%, #E8E8E8 100%);
-            z-index: 100;
-            overflow: hidden;
-        }
-
-        /* Page Header */
-        .page-header {
-            background: #FFFFFF;
-            box-shadow: 0 4px 12px rgba(157, 78, 221, 0.1);
-            border-bottom: 1px solid rgba(157, 78, 221, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        /* Channel Card */
-        .channel-card {
+            color: #764BA2;
             cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(15px);
-            animation: fadeIn 0.3s ease forwards;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .channel-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(118, 75, 162, 0.3);
+        }
+
+        .channel-card {
+            background: white;
+            border: 3px solid #764BA2;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 140px;
         }
 
         .channel-card:hover {
             transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(118, 75, 162, 0.4);
         }
 
         .channel-logo {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-            position: relative;
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
         }
 
-        .channel-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
+        .channel-name {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .match-card {
+            background: white;
+            border: 3px solid #764BA2;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(118, 75, 162, 0.3);
+        }
+
+        .team-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .status-badge {
+            background: #e5e7eb;
+            color: #666;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .bottom-nav {
+            background: #764BA2;
+            position: fixed;
+            bottom: 0;
             left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
 
-        .channel-card:hover .channel-logo {
-            transform: scale(1.05);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        .nav-button {
+            color: rgba(255,255,255,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: none;
+            border: none;
         }
 
-        .channels-grid {
+        .nav-button.active {
+            color: white;
+        }
+
+        .nav-button i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header {
+            background: #764BA2;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .content-container {
+            padding: 15px;
+            padding-bottom: 80px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .grid-3 {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+            gap: 10px;
         }
 
-        @media (min-width: 640px) {
-            .channels-grid { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 768px) {
+            .grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        @media (min-width: 768px) {
-            .channels-grid { grid-template-columns: repeat(5, 1fr); }
+        .hidden {
+            display: none;
         }
 
-        @media (min-width: 1024px) {
-            .channels-grid { grid-template-columns: repeat(6, 1fr); }
+        .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
         }
 
-        /* Highlight Card */
-        .highlight-card {
-            background: white;
-            border: 1px solid rgba(157, 78, 221, 0.1);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(15px);
-            animation: fadeIn 0.4s ease forwards;
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 18px;
         }
 
-        .highlight-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(157, 78, 221, 0.2);
-        }
-
-        .btn-press:active {
-            transform: scale(0.95);
-        }
-
-        .hide {
-            display: none !important;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .match-badge {
-            background: rgba(157, 78, 221, 0.1);
-            border: 1px solid rgba(157, 78, 221, 0.2);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            display: inline-flex;
+        .match-info {
+            display: flex;
             align-items: center;
-            gap: 4px;
+            color: #666;
+            font-size: 13px;
+            margin-top: 8px;
         }
 
-        /* تم إزالة CSS الخاص بالمشغل المدمج */
+        .match-info i {
+            margin-left: 8px;
+            color: #764BA2;
+        }
     </style>
 </head>
-<body class="transition-colors duration-300 smooth-scroll" data-theme="purple">
-    <!-- تم إزالة مشغل الفيديو المدمج -->
-
-    <!-- Server Selection Modal -->
-    <div id="serverModal" class="server-modal-overlay">
-        <div class="server-modal">
-            <div class="server-modal-header theme-transition">
-                <button class="server-modal-close" id="closeServerModal">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="channel-badge">
-                    <i class="fas fa-tv channel-badge-icon" id="modalChannelIcon"></i>
-                </div>
-                <h3 class="server-modal-title" id="modalChannelName">beIN Sports 1</h3>
-                <p class="server-modal-subtitle">اختر السيرفر المناسب</p>
-            </div>
-            <div class="server-list" id="serverListContainer"></div>
-        </div>
-    </div>
-
-    <!-- Sidebar Overlay -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- Sidebar Menu -->
-    <div id="sidebar" class="sidebar theme-transition">
-        <div class="sidebar-header theme-transition">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-xl font-bold">القائمة الرئيسية</h2>
-                <button id="closeSidebar" class="text-white/90 hover:text-white btn-press">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="flex items-center gap-3 mt-4">
-                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold">مرحباً بك</h3>
-                    <p class="text-xs opacity-90">مستخدم Abdo TV</p>
-                </div>
-            </div>
-        </div>
-
-        <nav class="px-3 space-y-1">
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="facebook">
-                <i class="fab fa-facebook text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">فيسبوك</span>
+<body>
+    <!-- الصفحة الرئيسية -->
+    <div id="homePage">
+        <div class="header">
+            <button class="icon-button" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
             </button>
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="telegram">
-                <i class="fab fa-telegram text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">تلغرام</span>
+            <div class="header-title">Yacine TV</div>
+            <button class="icon-button" onclick="searchChannels()">
+                <i class="fas fa-search"></i>
             </button>
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="tiktok">
-                <i class="fab fa-tiktok text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">تيك توك</span>
+        </div>
+
+        <div class="content-container" id="homeContent">
+            <div class="loading">جاري تحميل القنوات...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-button active" onclick="showPage('home')">
+                <i class="fas fa-tv"></i>
+                <span>LIVE TV</span>
             </button>
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="youtube">
-                <i class="fab fa-youtube text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">يوتيوب</span>
+            <button class="nav-button" onclick="showPage('events')">
+                <i class="far fa-calendar"></i>
+                <span>LIVE EVENT</span>
             </button>
-            <div class="border-t border-gray-200 my-3"></div>
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="about">
-                <i class="fas fa-info-circle text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">حول التطبيق</span>
+        </div>
+    </div>
+
+    <!-- صفحة القنوات الفرعية -->
+    <div id="channelsPage" class="hidden">
+        <div class="header">
+            <button class="back-button" onclick="backToHome()">
+                <i class="fas fa-arrow-right"></i>
             </button>
-            <button class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700" data-action="share">
-                <i class="fas fa-share-alt text-lg w-5"></i>
-                <span class="sidebar-text font-semibold text-sm">مشاركة التطبيق</span>
+            <div class="header-title" id="channelsTitle"></div>
+            <button class="icon-button" onclick="searchChannels()">
+                <i class="fas fa-search"></i>
             </button>
-        </nav>
+        </div>
 
-        <div class="px-3 mt-4 mb-4 text-center">
-            <p class="text-xs text-gray-400">Abdo TV v3.0.0</p>
+        <div class="content-container grid-3" id="channelsContent">
+            <div class="loading">جاري تحميل القنوات...</div>
         </div>
     </div>
 
-    <!-- Main Home Screen -->
-    <div id="homeScreen">
-        <!-- Header -->
-        <header class="bg-white shadow-sm sticky top-0 z-40 theme-transition">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button id="menuBtn" class="text-gray-700 btn-press">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <button id="refreshBtn" class="text-gray-700 btn-press">
-                        <i class="fas fa-sync-alt text-xl"></i>
-                    </button>
-                </div>
-                <h1 class="text-xl font-bold gradient-text">Abdo TV</h1>
-                <div class="w-20"></div>
-            </div>
-        </header>
-
-        <!-- Search Bar -->
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="relative">
-                <input type="text" id="searchInput" placeholder="البحث عن قناة أ�� باقة..." class="w-full px-4 py-3 pr-12 rounded-xl bg-white text-gray-800 border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-base shadow-sm theme-transition">
-                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400"></i>
-            </div>
+    <!-- صفحة المباريات -->
+    <div id="eventsPage" class="hidden">
+        <div class="header">
+            <button class="back-button" onclick="backToHome()">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <div class="header-title">LIVE EVENT</div>
+            <button class="icon-button" onclick="searchChannels()">
+                <i class="fas fa-search"></i>
+            </button>
         </div>
 
-        <!-- Telegram Banner -->
-        <div id="telegramBanner" class="max-w-7xl mx-auto px-4 mb-4">
-            <div class="rounded-xl px-4 py-3 flex items-center justify-between shadow-lg theme-transition" style="background: linear-gradient(to left, var(--primary-light), var(--primary-color));">
-                <button id="closeBanner" class="text-white btn-press">
-                    <i class="fas fa-times"></i>
-                </button>
-                <p class="text-white text-sm flex-1 text-center font-semibold">
-                    <i class="fab fa-telegram-plane ml-2"></i>
-                    أنضم الى قناتنا على التلغرام
-                </p>
-                <div class="w-6"></div>
-            </div>
+        <div class="content-container" id="eventsContent">
+            <div class="loading">جاري تحميل المباريات...</div>
         </div>
 
-        <!-- Packages List -->
-        <main class="max-w-7xl mx-auto px-4 pb-24">
-            <h2 class="text-lg font-bold gradient-text text-center mb-4">اختر الباقة المناسبة</h2>
-            <div id="packagesList" class="space-y-4"></div>
-        </main>
-
-        <!-- Bottom Navigation -->
-        <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white shadow-lg theme-transition">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="flex items-center justify-around py-2">
-                    <button class="nav-item active flex flex-col items-center gap-1 py-2 px-4" data-nav="home" style="color: var(--primary-color);">
-                        <i class="fas fa-home text-xl"></i>
-                        <span class="text-xs font-semibold">الرئيسية</span>
-                    </button>
-                    <button class="nav-item flex flex-col items-center gap-1 py-2 px-4 text-gray-600" data-nav="highlights">
-                        <i class="fas fa-futbol text-xl"></i>
-                        <span class="text-xs font-semibold">ملخصات</span>
-                    </button>
-                    <button class="nav-item flex flex-col items-center gap-1 py-2 px-4 text-gray-600" data-nav="matches">
-                        <i class="fas fa-calendar text-xl"></i>
-                        <span class="text-xs font-semibold">المباريات</span>
-                    </button>
-                    <button class="nav-item flex flex-col items-center gap-1 py-2 px-4 text-gray-600" data-nav="favorites">
-                        <i class="fas fa-heart text-xl"></i>
-                        <span class="text-xs font-semibold">المفضلة</span>
-                    </button>
-                </div>
-            </div>
-        </nav>
-    </div>
-
-    <!-- Matches Full Page Screen -->
-    <div id="matchesScreen" class="full-page-screen hide">
-        <div class="page-header px-4 py-3">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <button id="backFromMatches" class="text-gray-700 btn-press">
-                    <i class="fas fa-arrow-right text-xl"></i>
-                </button>
-                <h2 class="text-lg font-bold gradient-text">جدول المباريات</h2>
-                <button id="refreshMatches" class="text-gray-700 btn-press">
-                    <i class="fas fa-sync-alt text-xl"></i>
-                </button>
-            </div>
-        </div>
-        <div class="scroll-container px-4 py-4">
-            <div class="max-w-7xl mx-auto">
-                <div id="matchesList" class="space-y-4"></div>
-            </div>
+        <div class="bottom-nav">
+            <button class="nav-button" onclick="showPage('home')">
+                <i class="fas fa-tv"></i>
+                <span>LIVE TV</span>
+            </button>
+            <button class="nav-button active" onclick="showPage('events')">
+                <i class="far fa-calendar"></i>
+                <span>LIVE EVENT</span>
+            </button>
         </div>
     </div>
-
-    <!-- Highlights Full Page Screen -->
-    <div id="highlightsScreen" class="full-page-screen hide">
-        <div class="page-header px-4 py-3">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <button id="backFromHighlights" class="text-gray-700 btn-press">
-                    <i class="fas fa-arrow-right text-xl"></i>
-                </button>
-                <h2 class="text-lg font-bold gradient-text">أهداف وملخصات</h2>
-                <button id="refreshHighlights" class="text-gray-700 btn-press">
-                    <i class="fas fa-sync-alt text-xl"></i>
-                </button>
-            </div>
-        </div>
-        <div class="scroll-container px-4 py-4">
-            <div class="max-w-7xl mx-auto space-y-3" id="highlightsList"></div>
-        </div>
-    </div>
-
-    <!-- Favorites Full Page Screen -->
-    <div id="favoritesScreen" class="full-page-screen hide">
-        <div class="page-header px-4 py-3">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <button id="backFromFavorites" class="text-gray-700 btn-press">
-                    <i class="fas fa-arrow-right text-xl"></i>
-                </button>
-                <h2 class="text-lg font-bold gradient-text">المفضلة</h2>
-                <button id="refreshFavorites" class="text-gray-700 btn-press">
-                    <i class="fas fa-sync-alt text-xl"></i>
-                </button>
-            </div>
-        </div>
-        <div class="scroll-container px-4 py-4">
-            <div class="max-w-7xl mx-auto">
-                <div id="favoritesList" class="space-y-3"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Channels Screen -->
-    <div id="channelsScreen" class="full-page-screen hide">
-        <!-- Content populated by JS -->
-    </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-    <!-- تم إزالة مكتبة Plyr -->
 
     <script>
-        // Firebase Configuration
+        // تهيئة Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCralXWvcBVLglMsZqSLgkRctI7c8A1cns",
-            authDomain: "abdo-19460.firebaseapp.com",
-            databaseURL: "https://abdo-19460-default-rtdb.firebaseio.com",
-            projectId: "abdo-19460",
-            storageBucket: "abdo-19460.firebasestorage.app",
-            messagingSenderId: "735097471239",
-            appId: "1:735097471239:android:ef3c2b336a5b052e9cc5a2"
+            apiKey: "AIzaSyC9ZTWHYrctKe0MVWLoKVYJZJjBd0-Kfz8",
+            authDomain: "nmih-5c9d7.firebaseapp.com",
+            databaseURL: "https://nmih-5c9d7-default-rtdb.firebaseio.com",
+            projectId: "nmih-5c9d7",
+            storageBucket: "nmih-5c9d7.firebasestorage.app",
+            messagingSenderId: "1045208701183",
+            appId: "1:1045208701183:android:d207abe6916231388154ca"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Prevent copy/paste/right-click
-        document.addEventListener('copy', (e) => e.preventDefault());
-        document.addEventListener('cut', (e) => e.preventDefault());
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        let currentCategory = null;
 
-        const beinColors = ['#9D4EDD', '#7B2CBF', '#5A189A', '#3C096C', '#6A4C93', '#8B5FBF', '#C77DFF'];
-
-        let packages = [];
-        let channels = {};
-        let matches = [];
-        let highlights = [];
-        let favorites = [];
-        let currentPackage = null;
-        let currentChannel = null;
-        let matchTimeChecker = null;
-
-        // Check if a string is an image URL
-        function isImageUrl(str) {
-            if (!str) return false;
-            return str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:image');
-        }
-
-        // Get image URL from object (supports multiple field names)
-        function getImageUrl(obj) {
-            if (!obj) return null;
-            // Try common field names for images
-            return obj.image || obj.imageUrl || obj.img || obj.logo || obj.photo || obj.picture || null;
-        }
-
-        // دالة جديدة لإرسال البيانات إلى Sketchware
-        function sendToSketchware(streamUrl, title) {
-            // هذه الدالة سترسل البيانات إلى التطبيق في Sketchware
-            if (window.androidInterface) {
-                // إذا كان التطبيق موجوداً (في Sketchware)
-                window.androidInterface.playStream(streamUrl, title);
-            } else {
-                // للاختبار في المتصفح العادي
-                console.log("سيتم تشغيل في Sketchware:", title, streamUrl);
-            }
-        }
-
-        // Social media links
-        const socialLinks = {
-            facebook: 'https://www.facebook.com',
-            telegram: 'https://t.me',
-            tiktok: 'https://www.tiktok.com',
-            youtube: 'https://www.youtube.com'
-        };
-
-        // Check if match time has arrived
-        function isMatchLive(matchTime) {
-            if (!matchTime) return false;
-
-            try {
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-
-                // Parse match time (supports formats like "15:00", "3:00 PM", "03:00")
-                let matchHour, matchMinute;
-
-                // Remove any extra spaces
-                matchTime = matchTime.trim();
-
-                // Check if it contains AM/PM
-                if (matchTime.toLowerCase().includes('pm') || matchTime.toLowerCase().includes('am')) {
-                    const isPM = matchTime.toLowerCase().includes('pm');
-                    const timeStr = matchTime.replace(/am|pm/gi, '').trim();
-                    const parts = timeStr.split(':');
-                    matchHour = parseInt(parts[0]);
-                    matchMinute = parts[1] ? parseInt(parts[1]) : 0;
-
-                    if (isPM && matchHour !== 12) {
-                        matchHour += 12;
-                    } else if (!isPM && matchHour === 12) {
-                        matchHour = 0;
-                    }
-                } else {
-                    // 24-hour format
-                    const parts = matchTime.split(':');
-                    matchHour = parseInt(parts[0]);
-                    matchMinute = parts[1] ? parseInt(parts[1]) : 0;
-                }
-
-                // Check if current time is at or past match time
-                if (currentHour > matchHour) {
-                    return true;
-                } else if (currentHour === matchHour && currentMinute >= matchMinute) {
-                    return true;
-                }
-
-                return false;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        // Load data from Firebase
+        // تحميل الباقات من Firebase
         function loadPackages() {
+            const homeContent = document.getElementById('homeContent');
+            homeContent.innerHTML = '<div class="loading">جاري تحميل القنوات...</div>';
+
             database.ref('packages').on('value', (snapshot) => {
-                const data = snapshot.val();
-                packages = data ? Object.keys(data).map(key => ({
-                    id: key,
-                    ...data[key]
-                })) : [];
-                renderPackages();
-            });
-        }
+                const packages = snapshot.val();
+                homeContent.innerHTML = '';
 
-        function loadChannels() {
-            database.ref('channels').on('value', (snapshot) => {
-                const data = snapshot.val();
-                channels = data || {};
-            });
-        }
-
-        function loadMatches() {
-            database.ref('matches').on('value', (snapshot) => {
-                const data = snapshot.val();
-                matches = data ? Object.keys(data).map(key => ({
-                    id: key,
-                    ...data[key]
-                })) : [];
-                renderMatches();
-            });
-        }
-
-        function loadHighlights() {
-            database.ref('highlights').on('value', (snapshot) => {
-                const data = snapshot.val();
-                highlights = data ? Object.keys(data).map(key => ({
-                    id: key,
-                    ...data[key]
-                })) : [];
-                renderHighlights();
-            });
-        }
-
-        // Server Modal Functions
-        function openServerModal(channel) {
-            currentChannel = channel;
-            const modal = document.getElementById('serverModal');
-            const modalName = document.getElementById('modalChannelName');
-            const modalIcon = document.getElementById('modalChannelIcon');
-            const channelBadge = document.querySelector('.channel-badge');
-            const serverListContainer = document.getElementById('serverListContainer');
-
-            modalName.textContent = channel.name;
-
-            // Update icon - support both images and text/emojis
-            const imageUrl = getImageUrl(channel);
-
-            if (imageUrl && isImageUrl(imageUrl)) {
-                // If it's an image URL
-                channelBadge.innerHTML = `<img src="${imageUrl}" alt="${channel.name}">`;
-            } else if (channel.icon) {
-                // If it's text or emoji
-                modalIcon.className = '';
-                modalIcon.textContent = channel.icon;
-                modalIcon.style.fontSize = '2.5rem';
-                channelBadge.innerHTML = `<i class="channel-badge-icon" id="modalChannelIcon">${channel.icon}</i>`;
-            } else {
-                // Default icon
-                channelBadge.innerHTML = '<i class="fas fa-tv channel-badge-icon" id="modalChannelIcon"></i>';
-            }
-
-            // Render servers
-            serverListContainer.innerHTML = '';
-            if (channel.servers) {
-                Object.keys(channel.servers).forEach((serverType, index) => {
-                    const serverUrl = channel.servers[serverType];
-                    const serverNames = {
-                        sd: 'سيرفر SD',
-                        hd: 'سيرفر HD',
-                        fhd: 'سيرفر FHD'
-                    };
-                    const serverDescriptions = {
-                        sd: 'جودة قياسية - سرعة عالية',
-                        hd: 'جودة عالية - موصى به',
-                        fhd: 'جودة فائقة - أفضل تجربة'
-                    };
-                    const serverClasses = {
-                        sd: '',
-                        hd: 'hd',
-                        fhd: 'fhd'
-                    };
-
-                    const serverOption = document.createElement('div');
-                    serverOption.className = 'server-option';
-                    serverOption.style.animationDelay = `${index * 0.05}s`;
-                    serverOption.innerHTML = `
-                        <div class="server-option-content">
-                            <div class="server-option-left">
-                                <div class="server-icon">
-                                    <i class="fas fa-${serverType === 'sd' ? 'signal' : serverType === 'hd' ? 'hdd' : 'crown'}"></i>
-                                </div>
-                                <div class="server-info">
-                                    <h4>${serverNames[serverType] || serverType}</h4>
-                                    <p>${serverDescriptions[serverType] || 'سيرفر للمشاهدة'}</p>
-                                </div>
-                            </div>
-                            <span class="server-quality-badge ${serverClasses[serverType]}">${serverType.toUpperCase()}</span>
-                        </div>
-                    `;
-                    serverOption.addEventListener('click', () => {
-                        if (serverUrl) {
-                            // استخدام الدالة الجديدة بدلاً من playVideo
-                            sendToSketchware(serverUrl, channel.name);
-                            closeServerModal();
-                        }
+                if (packages) {
+                    Object.keys(packages).forEach(key => {
+                        const pkg = packages[key];
+                        const button = document.createElement('div');
+                        button.className = 'channel-button';
+                        button.textContent = pkg.name || key;
+                        button.onclick = () => loadChannels(key, pkg.name || key);
+                        homeContent.appendChild(button);
                     });
-                    serverListContainer.appendChild(serverOption);
-                });
-            }
-
-            modal.classList.add('active');
-        }
-
-        function closeServerModal() {
-            const modal = document.getElementById('serverModal');
-            modal.classList.remove('active');
-            currentChannel = null;
-        }
-
-        // Server Modal Event Listeners
-        document.getElementById('closeServerModal').addEventListener('click', closeServerModal);
-        document.getElementById('serverModal').addEventListener('click', (e) => {
-            if (e.target.id === 'serverModal') {
-                closeServerModal();
-            }
-        });
-
-        // Theme Management
-        function applyTheme(themeName) {
-            document.body.setAttribute('data-theme', themeName);
-            document.cookie = `abdoTV_theme=${themeName}; max-age=31536000; path=/`;
-        }
-
-        function loadSavedTheme() {
-            try {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'abdoTV_theme' && value) {
-                        document.body.setAttribute('data-theme', value);
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.log('Theme loading skipped');
-            }
-        }
-
-        // تحميل الثيم المحفوظ عند بدء التطبيق
-        loadSavedTheme();
-
-        function renderPackages() {
-            const list = document.getElementById('packagesList');
-            list.innerHTML = '';
-            packages.forEach((pkg, i) => {
-                const card = document.createElement('div');
-                card.className = 'package-card bg-white rounded-2xl p-5 flex items-center justify-between shadow-lg cursor-pointer border border-purple-100';
-                card.style.animationDelay = `${i * 0.05}s`;
-
-                // Generate icon content - support both images and text/emojis
-                let iconContent = '';
-                const imageUrl = getImageUrl(pkg);
-
-                if (imageUrl && isImageUrl(imageUrl)) {
-                    // If it's an image URL
-                    iconContent = `<img src="${imageUrl}" alt="${pkg.name}">`;
-                } else if (pkg.icon) {
-                    // If it's text or emoji
-                    iconContent = `<div class="package-icon-text">${pkg.icon}</div>`;
                 } else {
-                    // Default icon
-                    iconContent = '<i class="fas fa-tv text-3xl"></i>';
+                    homeContent.innerHTML = '<div class="loading">لا توجد باقات متاحة حالياً</div>';
                 }
-
-                card.innerHTML = `
-                    <i class="fas fa-chevron-left text-lg" style="color: var(--primary-color);"></i>
-                    <div class="flex-1 text-center">
-                        <h3 class="font-bold text-gray-800 text-lg">${pkg.name}</h3>
-                        <p class="text-xs text-gray-500 mt-1">${pkg.description || ''}</p>
-                    </div>
-                    <div class="package-icon-container" style="background: linear-gradient(135deg, ${pkg.color}20, ${pkg.color}40);">
-                        ${iconContent}
-                    </div>
-                `;
-                card.addEventListener('click', () => openPackage(pkg));
-                list.appendChild(card);
+            }, (error) => {
+                console.error('Error loading packages:', error);
+                homeContent.innerHTML = '<div class="loading">حدث خطأ في تحميل القنوات</div>';
             });
         }
 
-        function renderMatches() {
-            const list = document.getElementById('matchesList');
-            list.innerHTML = '';
-            if (matches.length === 0) {
-                list.innerHTML = '<div class="text-center py-12"><i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 font-semibold">لا توجد مباريات حالياً</p></div>';
-                return;
-            }
-            matches.forEach((match, i) => {
-                const card = document.createElement('div');
-                card.className = 'match-card relative';
-                card.style.animationDelay = `${i * 0.05}s`;
+        // تحميل القنوات من Firebase
+        function loadChannels(packageId, packageName) {
+            currentCategory = packageId;
+            document.getElementById('channelsTitle').textContent = packageName;
 
-                // Check if match is live (either from Firebase or time-based)
-                const isLive = match.isLive || isMatchLive(match.time);
+            const channelsContent = document.getElementById('channelsContent');
+            channelsContent.innerHTML = '<div class="loading">جاري تحميل القنوات...</div>';
 
-                // Get team logos (support both image URLs and emojis/text)
-                const team1LogoContent = match.team1Logo ?
-                    (match.team1Logo.startsWith('http') ?
-                        `<img src="${match.team1Logo}" alt="${match.team1Name}">` :
-                        match.team1Logo) :
-                    'T1';
+            database.ref('packages/' + packageId + '/channels').on('value', (snapshot) => {
+                const channels = snapshot.val();
+                channelsContent.innerHTML = '';
 
-                const team2LogoContent = match.team2Logo ?
-                    (match.team2Logo.startsWith('http') ?
-                        `<img src="${match.team2Logo}" alt="${match.team2Name}">` :
-                        match.team2Logo) :
-                    'T2';
-
-                card.innerHTML = `
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="match-badge">
-                            <i class="fas fa-trophy" style="color: var(--primary-color);"></i>
-                            ${match.league}
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 mb-4">
-                        <!-- Team 1 -->
-                        <div class="flex-1 flex flex-col items-center">
-                            <div class="team-logo bg-gradient-to-br ${match.team1Gradient || 'from-purple-500 to-purple-600'}">
-                                ${team1LogoContent}
-                            </div>
-                            <div class="team-name">${match.team1Name}</div>
-                        </div>
-
-                        <!-- Time/Live Status -->
-                        <div class="flex-shrink-0">
-                            ${isLive ?
-                                '<div class="live-indicator"><div class="live-dot"></div><span>جارية الآن</span></div>'
-                                :
-                                `<div class="time-display">
-                                    <div class="time-label">التوقيت</div>
-                                    <div class="time-value">${match.time}</div>
-                                </div>`
-                            }
-                        </div>
-
-                        <!-- Team 2 -->
-                        <div class="flex-1 flex flex-col items-center">
-                            <div class="team-logo bg-gradient-to-br ${match.team2Gradient || 'from-red-500 to-red-600'}">
-                                ${team2LogoContent}
-                            </div>
-                            <div class="team-name">${match.team2Name}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between pt-4 border-t border-purple-100">
-                        <div class="flex items-center gap-2 text-sm text-gray-600">
-                            <i class="fas fa-tv" style="color: var(--primary-color);"></i>
-                            <span class="font-semibold">${match.channel}</span>
-                        </div>
-                        ${match.commentator ? `
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <i class="fas fa-microphone" style="color: var(--primary-color);"></i>
-                                <span>${match.commentator}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                card.addEventListener('click', () => {
-                    if (match.streamUrl) {
-                        // استخدام الدالة الجديدة بدلاً من playVideo
-                        sendToSketchware(match.streamUrl, `${match.team1Name} vs ${match.team2Name}`);
-                    }
-                });
-                list.appendChild(card);
-            });
-        }
-
-        function renderHighlights() {
-            const list = document.getElementById('highlightsList');
-            list.innerHTML = '';
-            if (highlights.length === 0) {
-                list.innerHTML = '<div class="text-center py-12"><i class="fas fa-video-slash text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 font-semibold">لا توجد ملخصات حالياً</p></div>';
-                return;
-            }
-            highlights.forEach((highlight, i) => {
-                const card = document.createElement('div');
-                card.className = 'highlight-card rounded-xl overflow-hidden cursor-pointer';
-                card.style.animationDelay = `${i * 0.05}s`;
-                card.innerHTML = `
-                    <div class="aspect-video flex items-center justify-center relative theme-transition" style="background: linear-gradient(135deg, ${highlight.color1 || 'var(--primary-color)'}, ${highlight.color2 || 'var(--primary-light)'});">
-                        <i class="fas fa-play-circle text-6xl text-white opacity-80"></i>
-                        ${highlight.duration ? `<div class="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs"><i class="fas fa-clock ml-1"></i>${highlight.duration}</div>` : ''}
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-gray-800 mb-1">${highlight.title}</h3>
-                        <p class="text-sm text-gray-600">${highlight.description || ''}</p>
-                    </div>
-                `;
-                card.addEventListener('click', () => {
-                    if (highlight.videoUrl) {
-                        // استخدام الدالة الجديدة بدلاً من playVideo
-                        sendToSketchware(highlight.videoUrl, highlight.title);
-                    }
-                });
-                list.appendChild(card);
-            });
-        }
-
-        function renderFavorites() {
-            const list = document.getElementById('favoritesList');
-            list.innerHTML = '';
-            const favChannels = [];
-            Object.values(channels).forEach(pkgChannels => {
-                Object.keys(pkgChannels).forEach(chKey => {
-                    const ch = pkgChannels[chKey];
-                    if (favorites.includes(ch.id || chKey)) {
-                        favChannels.push({ ...ch, id: ch.id || chKey });
-                    }
-                });
-            });
-            if (favChannels.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-12">
-                        <i class="fas fa-heart-broken text-6xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500 font-semibold">لا توجد قنوات مفضلة</p>
-                    </div>
-                `;
-                return;
-            }
-            favChannels.forEach((ch, i) => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl p-4 flex items-center justify-between shadow-sm cursor-pointer';
-                card.style.animationDelay = `${i * 0.04}s`;
-                card.innerHTML = `
-                    <i class="fas fa-play-circle text-xl" style="color: var(--primary-color);"></i>
-                    <div class="flex-1 text-center"><h3 class="font-semibold text-gray-800">${ch.name}</h3></div>
-                    <div class="w-12 h-12 flex items-center justify-center text-3xl bg-red-100 rounded-xl">${ch.icon || '📺'}</div>
-                `;
-                card.addEventListener('click', () => {
-                    openServerModal(ch);
-                });
-                list.appendChild(card);
-            });
-        }
-
-        function openPackage(pkg) {
-            currentPackage = pkg;
-            document.getElementById('homeScreen').classList.add('hide');
-            document.getElementById('channelsScreen').classList.remove('hide');
-            renderChannels(pkg.id);
-        }
-
-        function renderChannels(packageId) {
-            const screen = document.getElementById('channelsScreen');
-            const packageChannels = channels[packageId] || {};
-            const channelsArray = Object.keys(packageChannels).map(key => ({
-                id: key,
-                ...packageChannels[key]
-            }));
-            const pkg = packages.find(p => p.id === packageId);
-            let html = `
-                <div class="page-header px-4 py-3">
-                    <div class="max-w-7xl mx-auto flex items-center justify-between">
-                        <button id="backToPackages" class="text-gray-700 btn-press"><i class="fas fa-arrow-right text-xl"></i></button>
-                        <h2 class="text-lg font-bold gradient-text">${pkg.name.replace('باقة ', '')}</h2>
-                        <button id="channelsRefresh" class="text-gray-700 btn-press"><i class="fas fa-sync-alt text-xl"></i></button>
-                    </div>
-                </div>
-                <div class="scroll-container px-4 py-6">
-                    <div class="max-w-7xl mx-auto"><div class="channels-grid">
-            `;
-
-            if (channelsArray.length === 0) {
-                html += '<div class="col-span-full text-center py-12"><i class="fas fa-tv text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 font-semibold">لا توجد قنوات في هذه الباقة</p></div>';
-            } else {
-                channelsArray.forEach((ch, i) => {
-                    const channelNumber = ch.number || (i + 1);
-                    const bgColor = ch.color || pkg.color || '#9D4EDD';
-
-                    // Generate channel content - support both images and text/emojis
-                    let channelContent = '';
-                    if (ch.image && isImageUrl(ch.image)) {
-                        // If it's an image URL
-                        channelContent = `<img src="${ch.image}" alt="${ch.name}">`;
-                    } else if (ch.icon) {
-                        // If it's text or emoji
-                        channelContent = `<div class="text-4xl">${ch.icon}</div>`;
-                    } else {
-                        // Default with channel number
-                        channelContent = `<div class="text-center"><div class="text-sm font-bold mb-1">${ch.name.split(' ')[0]}</div><div class="text-3xl font-black">${channelNumber}</div></div>`;
-                    }
-
-                    html += `
-                        <div class="channel-card" data-channel-id="${ch.id}" style="animation-delay: ${i * 0.03}s;">
-                            <div class="channel-logo" style="background: linear-gradient(135deg, ${bgColor}, ${bgColor}dd);">
-                                ${channelContent}
-                            </div>
-                            <p class="text-center mt-2 text-sm font-semibold text-gray-800">${ch.name}</p>
-                        </div>
-                    `;
-                });
-            }
-
-            html += '</div></div></div>';
-            screen.innerHTML = html;
-
-            screen.querySelectorAll('.channel-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const channelId = card.getAttribute('data-channel-id');
-                    const channel = channelsArray.find(ch => ch.id === channelId);
-                    if (channel) {
-                        openServerModal(channel);
-                    }
-                });
-            });
-
-            document.getElementById('backToPackages').addEventListener('click', () => {
-                screen.classList.add('hide');
-                document.getElementById('homeScreen').classList.remove('hide');
-                currentPackage = null;
-            });
-
-            document.getElementById('channelsRefresh').addEventListener('click', () => {
-                const icon = document.querySelector('#channelsRefresh i');
-                icon.style.animation = 'spin 0.8s linear';
-                setTimeout(() => icon.style.animation = '', 800);
-            });
-        }
-
-        function showScreen(screenId) {
-            ['homeScreen', 'matchesScreen', 'highlightsScreen', 'favoritesScreen'].forEach(id => {
-                document.getElementById(id).classList.add('hide');
-            });
-            document.getElementById(screenId).classList.remove('hide');
-            if (screenId === 'matchesScreen') {
-                renderMatches();
-                startMatchTimeChecker();
-            } else {
-                stopMatchTimeChecker();
-            }
-            if (screenId === 'highlightsScreen') renderHighlights();
-            if (screenId === 'favoritesScreen') renderFavorites();
-            updateBottomNav(screenId);
-        }
-
-        // Start automatic match time checking
-        function startMatchTimeChecker() {
-            // Clear any existing interval
-            stopMatchTimeChecker();
-
-            // Check every 30 seconds if any match time has arrived
-            matchTimeChecker = setInterval(() => {
-                renderMatches();
-            }, 30000); // 30 seconds
-        }
-
-        // Stop automatic match time checking
-        function stopMatchTimeChecker() {
-            if (matchTimeChecker) {
-                clearInterval(matchTimeChecker);
-                matchTimeChecker = null;
-            }
-        }
-
-        function updateBottomNav(screenId) {
-            const navMapping = {
-                'homeScreen': 'home',
-                'highlightsScreen': 'highlights',
-                'matchesScreen': 'matches',
-                'favoritesScreen': 'favorites'
-            };
-
-            const activeNav = navMapping[screenId];
-
-            document.querySelectorAll('.nav-item').forEach(item => {
-                const nav = item.getAttribute('data-nav');
-                if (nav === activeNav) {
-                    item.classList.add('active');
-                    item.style.color = 'var(--primary-color)';
-                } else {
-                    item.classList.remove('active');
-                    item.style.color = '#6B7280';
-                }
-            });
-        }
-
-        // Sidebar
-        document.getElementById('menuBtn').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.add('active');
-            document.getElementById('sidebarOverlay').classList.add('active');
-        });
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        }
-
-        document.getElementById('closeSidebar').addEventListener('click', closeSidebar);
-        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const action = item.getAttribute('data-action');
-                closeSidebar();
-
-                if (socialLinks[action]) {
-                    window.open(socialLinks[action], '_blank');
-                } else if (action === 'about') {
-                    const modal = document.createElement('div');
-                    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                    modal.innerHTML = `
-                        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-                            <div class="text-center mb-4">
-                                <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-light));"><i class="fas fa-tv text-4xl text-white"></i></div>
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Abdo TV</h3>
-                                <p class="text-sm text-gray-600">الإصدار 3.0.0</p>
-                            </div>
-                            <button class="w-full px-4 py-3 rounded-xl text-white font-semibold" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-light));" onclick="this.closest('.fixed').remove()">حسناً</button>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-                }
-            });
-        });
-
-        // Bottom Nav
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const nav = item.getAttribute('data-nav');
-                document.querySelectorAll('.nav-item').forEach(i => {
-                    i.classList.remove('active');
-                    i.style.color = '#6B7280';
-                });
-                item.classList.add('active');
-                item.style.color = 'var(--primary-color)';
-
-                if (nav === 'home') showScreen('homeScreen');
-                else if (nav === 'highlights') showScreen('highlightsScreen');
-                else if (nav === 'matches') showScreen('matchesScreen');
-                else if (nav === 'favorites') showScreen('favoritesScreen');
-            });
-        });
-
-        // Back buttons
-        document.getElementById('backFromMatches').addEventListener('click', () => showScreen('homeScreen'));
-        document.getElementById('backFromHighlights').addEventListener('click', () => showScreen('homeScreen'));
-        document.getElementById('backFromFavorites').addEventListener('click', () => showScreen('homeScreen'));
-
-        // Refresh buttons
-        document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
-        document.getElementById('refreshMatches').addEventListener('click', () => {
-            const icon = document.querySelector('#refreshMatches i');
-            icon.style.animation = 'spin 0.8s linear';
-            setTimeout(() => { icon.style.animation = ''; renderMatches(); }, 800);
-        });
-        document.getElementById('refreshHighlights').addEventListener('click', () => {
-            const icon = document.querySelector('#refreshHighlights i');
-            icon.style.animation = 'spin 0.8s linear';
-            setTimeout(() => { icon.style.animation = ''; renderHighlights(); }, 800);
-        });
-        document.getElementById('refreshFavorites').addEventListener('click', () => {
-            const icon = document.querySelector('#refreshFavorites i');
-            icon.style.animation = 'spin 0.8s linear';
-            setTimeout(() => { icon.style.animation = ''; renderFavorites(); }, 800);
-        });
-
-        document.getElementById('closeBanner').addEventListener('click', () => {
-            document.getElementById('telegramBanner').style.display = 'none';
-        });
-
-        // Search
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const term = e.target.value.toLowerCase();
-                if (!term) {
-                    renderPackages();
-                    return;
-                }
-                const filtered = packages.filter(p => p.name.toLowerCase().includes(term) || (p.description && p.description.toLowerCase().includes(term)));
-                const list = document.getElementById('packagesList');
-                list.innerHTML = '';
-                if (filtered.length > 0) {
-                    filtered.forEach((pkg, i) => {
+                if (channels) {
+                    Object.keys(channels).forEach(key => {
+                        const channel = channels[key];
                         const card = document.createElement('div');
-                        card.className = 'package-card bg-white rounded-2xl p-5 flex items-center justify-between shadow-lg cursor-pointer border border-purple-100';
-                        card.style.animationDelay = `${i * 0.05}s`;
+                        card.className = 'channel-card';
 
-                        // Generate icon content - support both images and text/emojis
-                        let iconContent = '';
-                        if (pkg.image && isImageUrl(pkg.image)) {
-                            iconContent = `<img src="${pkg.image}" alt="${pkg.name}">`;
-                        } else if (pkg.icon) {
-                            iconContent = `<div class="package-icon-text">${pkg.icon}</div>`;
-                        } else {
-                            iconContent = '<i class="fas fa-tv text-3xl"></i>';
+                        if (channel.logo) {
+                            const logo = document.createElement('img');
+                            logo.className = 'channel-logo';
+                            logo.src = channel.logo;
+                            logo.alt = channel.name;
+                            logo.onerror = function() {
+                                this.style.display = 'none';
+                            };
+                            card.appendChild(logo);
                         }
+
+                        const name = document.createElement('div');
+                        name.className = 'channel-name';
+                        name.textContent = channel.name || key;
+                        card.appendChild(name);
+
+                        card.onclick = () => playChannel(channel);
+                        channelsContent.appendChild(card);
+                    });
+                } else {
+                    channelsContent.innerHTML = '<div class="loading">لا توجد قنوات في هذه الباقة</div>';
+                }
+
+                showPage('channels');
+            }, (error) => {
+                console.error('Error loading channels:', error);
+                channelsContent.innerHTML = '<div class="loading">حدث خطأ في تحميل القنوات</div>';
+            });
+        }
+
+        // تحميل المباريات من Firebase
+        function loadEvents() {
+            const eventsContent = document.getElementById('eventsContent');
+            eventsContent.innerHTML = '<div class="loading">جاري تحميل المباريات...</div>';
+
+            database.ref('events').on('value', (snapshot) => {
+                const events = snapshot.val();
+                eventsContent.innerHTML = '';
+
+                if (events) {
+                    Object.keys(events).forEach(key => {
+                        const event = events[key];
+                        const card = document.createElement('div');
+                        card.className = 'match-card';
 
                         card.innerHTML = `
-                            <i class="fas fa-chevron-left text-lg" style="color: var(--primary-color);"></i>
-                            <div class="flex-1 text-center">
-                                <h3 class="font-bold text-gray-800 text-lg">${pkg.name}</h3>
-                                <p class="text-xs text-gray-500 mt-1">${pkg.description}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div style="text-align: center; flex: 1;">
+                                    ${event.team1Logo ? `<img src="${event.team1Logo}" class="team-logo" alt="${event.team1}">` : ''}
+                                    <div style="color: #764BA2; font-weight: bold; margin-top: 8px; font-size: 14px;">${event.team1 || ''}</div>
+                                </div>
+                                <div style="text-align: center; flex: 0 0 auto; padding: 0 20px;">
+                                    <div class="status-badge">جارية الآن</div>
+                                </div>
+                                <div style="text-align: center; flex: 1;">
+                                    ${event.team2Logo ? `<img src="${event.team2Logo}" class="team-logo" alt="${event.team2}">` : ''}
+                                    <div style="color: #764BA2; font-weight: bold; margin-top: 8px; font-size: 14px;">${event.team2 || ''}</div>
+                                </div>
                             </div>
-                            <div class="package-icon-container" style="background: linear-gradient(135deg, ${pkg.color}20, ${pkg.color}40);">
-                                ${iconContent}
-                            </div>
+                            ${event.league ? `
+                                <div class="match-info">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>${event.league}</span>
+                                </div>
+                            ` : ''}
+                            ${event.commentator ? `
+                                <div class="match-info">
+                                    <i class="fas fa-microphone"></i>
+                                    <span>علي محمد علي</span>
+                                </div>
+                            ` : ''}
+                            ${event.channel ? `
+                                <div class="match-info">
+                                    <i class="fas fa-tv"></i>
+                                    <span>${event.channel}</span>
+                                </div>
+                            ` : ''}
                         `;
-                        card.addEventListener('click', () => openPackage(pkg));
-                        list.appendChild(card);
+
+                        card.onclick = () => playEvent(event);
+                        eventsContent.appendChild(card);
                     });
                 } else {
-                    list.innerHTML = '<div class="text-center py-12"><i class="fas fa-search text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 font-semibold">لا توجد نتائج</p></div>';
+                    eventsContent.innerHTML = '<div class="loading">لا توجد مباريات مباشرة حالياً</div>';
                 }
-            }, 150);
-        });
+            }, (error) => {
+                console.error('Error loading events:', error);
+                eventsContent.innerHTML = '<div class="loading">حدث خطأ في تحميل المباريات</div>';
+            });
+        }
 
-        // Initialize - Load all data from Firebase
-        loadPackages();
-        loadChannels();
-        loadMatches();
-        loadHighlights();
+        // التنقل بين الصفحات
+        function showPage(page) {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('channelsPage').classList.add('hidden');
+            document.getElementById('eventsPage').classList.add('hidden');
+
+            if (page === 'home') {
+                document.getElementById('homePage').classList.remove('hidden');
+                updateBottomNav('home');
+            } else if (page === 'channels') {
+                document.getElementById('channelsPage').classList.remove('hidden');
+            } else if (page === 'events') {
+                document.getElementById('eventsPage').classList.remove('hidden');
+                loadEvents();
+                updateBottomNav('events');
+            }
+        }
+
+        function backToHome() {
+            showPage('home');
+        }
+
+        function updateBottomNav(active) {
+            const buttons = document.querySelectorAll('.nav-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (active === 'home') {
+                buttons[0].classList.add('active');
+            } else if (active === 'events') {
+                buttons[1].classList.add('active');
+            }
+        }
+
+        function playChannel(channel) {
+            showCustomAlert(`تشغيل قناة: ${channel.name}\n\nالرابط: ${channel.url || 'غير متوفر'}`);
+        }
+
+        function playEvent(event) {
+            showCustomAlert(`تشغيل مباراة: ${event.team1} vs ${event.team2}\n\nالقناة: ${event.channel || 'غير متوفر'}`);
+        }
+
+        function toggleMenu() {
+            showCustomAlert('القائمة الجانبية\n\nهذه الميزة قيد التطوير');
+        }
+
+        function searchChannels() {
+            showCustomAlert('البحث\n\nهذه الميزة قيد التطوير');
+        }
+
+        // دالة مخصصة للتنبيهات بدلاً من alert()
+        function showCustomAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); max-width: 400px; width: 90%; margin: 20px;">
+                    <p style="color: #333; margin-bottom: 20px; white-space: pre-line; line-height: 1.6;">${message}</p>
+                    <div style="text-align: center;">
+                        <button onclick="this.closest('div[style*=fixed]').remove()" style="padding: 12px 30px; background: #764BA2; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold;">حسناً</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+        }
+
+        // تحميل البيانات عند بدء التطبيق
+        window.addEventListener('load', () => {
+            loadPackages();
+        });
     </script>
 </body>
 </html>
